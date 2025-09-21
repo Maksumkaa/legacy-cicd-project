@@ -22,7 +22,7 @@ jobs:
 
     - name: Build the Docker image
       run: |
-          IMAGE=maksimkaaa/flask-image
+          IMAGE=maksimkaaa/flask
           TAG=${GITHUB_SHA::7}   
           docker build -t $IMAGE:$TAG ./app/.
           docker push $IMAGE:$TAG
