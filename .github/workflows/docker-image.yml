@@ -8,11 +8,34 @@ on:
 
 jobs:
 
-  build:
-
+  deploy:
     runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout repository code
+      uses: actions/checkout@v4
+    
+    - name: Log in to DockerHub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
     - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
+      run: |
+          IMAGE=maksimkaaa/flask-image
+          TAG=${GITHUB_SHA::7}   
+          docker build -t $IMAGE:$TAG .
+          docker push $IMAGE:$TAG
+          echo "IMAGE_TAG=$IMAGE:$TAG" >> $GITHUB_ENV
+
+    - name: Set up SSH
+      uses: webfactory/ssh-agent@v0.9.0
+      with:
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+    - name: Restart deployment with new image
+      run: |
+        ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} "
+          kubectl set image deployment/flask-deployment flask=${IMAGE_TAG} -n flask &&
+          kubectl rollout status deployment/flask-deployment -n flask
+        "
