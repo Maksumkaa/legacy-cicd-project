@@ -36,6 +36,5 @@ jobs:
     - name: Restart deployment with new image
       run: |
         ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} "
-          kubectl set image deployment/flask-deployment flask=${IMAGE_TAG} -n flask &&
           kubectl rollout status deployment/flask-deployment -n flask
         "
